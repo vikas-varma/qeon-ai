@@ -1,0 +1,26 @@
+# Flutter
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins*
+mobile/android/.gradle/
+mobile/ios/Pods/
+
+# Python
+__pycache__/
+*.py[cod]
+backend/.venv/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/oauth_tokens.db
+backend/*.log
+
+# Environment and secrets
+.env
+backend/.env
+*.pem
+*.key
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
