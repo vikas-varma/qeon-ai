@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: qeonai-api
+    runtime: python
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: QEON_APP_NAME
+        value: Qeon AI API
+      - key: QEON_ENVIRONMENT
+        value: production
+      - key: QEON_DEBUG
+        value: "false"
+      - key: QEON_API_PREFIX
+        value: /api/v1
+      - key: QEON_AI_PROVIDER
+        value: mock
+      - key: QEON_GOOGLE_CLIENT_ID
+        sync: false
+      - key: QEON_GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: QEON_GOOGLE_OAUTH_REDIRECT_URI
+        value: https://api.qeonai.com/api/v1/integrations/gmail/callback
+      - key: QEON_TOKEN_ENCRYPTION_KEY
+        sync: false
