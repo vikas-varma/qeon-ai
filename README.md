@@ -8,6 +8,7 @@ A production-oriented starter monorepo for the Qeon AI personal assistant.
 - Shared Qeon AI design system based on the approved light lavender/purple interface.
 - Riverpod state, GoRouter navigation and mock repositories so every screen is interactive without cloud credentials.
 - FastAPI backend with modular routers for chat streaming, agents, tasks, memory and user profile.
+- Static Qeon AI website with privacy and terms pages ready for Cloudflare Pages.
 - PostgreSQL/Redis Docker Compose services and environment templates.
 - API contract, workflow notes and implementation checklist.
 
@@ -15,6 +16,7 @@ A production-oriented starter monorepo for the Qeon AI personal assistant.
 
 ```text
 qeonai_full_starter/
+├── website/                Public website and legal pages
 ├── mobile/                 Flutter application source
 ├── backend/                FastAPI application
 ├── docs/                   Architecture, workflows and design reference
