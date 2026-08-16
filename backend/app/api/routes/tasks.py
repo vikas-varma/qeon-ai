@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import CurrentUser, get_current_user
 from app.db.session import get_db
-from app.models.tables import ScheduledTask
+from app.models.tables import AuditLog, ScheduledTask
 from app.repositories.users import get_or_create_user
 from app.schemas.common import TaskCreate, TaskOut, TaskStatus
 
@@ -50,8 +50,17 @@ async def create_task(
     user = await get_or_create_user(session, identity)
     task = ScheduledTask(user_id=user.id, **payload.model_dump())
     session.add(task)
+    await session.flush()
+    session.add(
+        AuditLog(
+            user_id=user.id,
+            action="task.created",
+            resource_type="scheduled_task",
+            resource_id=str(task.id),
+            details={"requires_approval": task.requires_approval},
+        )
+    )
     await session.commit()
-    await session.refresh(task)
     return _task_out(task)
 
 
@@ -75,6 +84,15 @@ async def delete_task(
     )
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
+    session.add(
+        AuditLog(
+            user_id=user.id,
+            action="task.deleted",
+            resource_type="scheduled_task",
+            resource_id=str(task.id),
+            details={},
+        )
+    )
     await session.delete(task)
     await session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

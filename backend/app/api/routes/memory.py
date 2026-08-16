@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import CurrentUser, get_current_user
 from app.db.session import get_db
-from app.models.tables import Memory
+from app.models.tables import AuditLog, Memory
 from app.repositories.users import get_or_create_user
 from app.schemas.common import MemoryCreate, MemoryOut
 
@@ -48,8 +48,17 @@ async def create_memory(
     user = await get_or_create_user(session, identity)
     memory = Memory(user_id=user.id, **payload.model_dump())
     session.add(memory)
+    await session.flush()
+    session.add(
+        AuditLog(
+            user_id=user.id,
+            action="memory.created",
+            resource_type="memory",
+            resource_id=str(memory.id),
+            details={"category": memory.category},
+        )
+    )
     await session.commit()
-    await session.refresh(memory)
     return _memory_out(memory)
 
 
@@ -70,6 +79,15 @@ async def delete_memory(
     )
     if memory is None:
         raise HTTPException(status_code=404, detail="Memory not found")
+    session.add(
+        AuditLog(
+            user_id=user.id,
+            action="memory.deleted",
+            resource_type="memory",
+            resource_id=str(memory.id),
+            details={},
+        )
+    )
     await session.delete(memory)
     await session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -82,5 +100,14 @@ async def clear_memories(
 ) -> Response:
     user = await get_or_create_user(session, identity)
     await session.execute(delete(Memory).where(Memory.user_id == user.id))
+    session.add(
+        AuditLog(
+            user_id=user.id,
+            action="memory.cleared",
+            resource_type="memory",
+            resource_id=None,
+            details={},
+        )
+    )
     await session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

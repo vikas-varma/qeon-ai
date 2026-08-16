@@ -52,3 +52,12 @@ class ChatRequest(BaseModel):
 
 class AccountDataDeletion(BaseModel):
     confirmation: Literal["DELETE"]
+
+
+class ActivityOut(BaseModel):
+    id: str
+    action: str
+    resource_type: str
+    resource_id: str | None
+    details: dict
+    created_at: datetime

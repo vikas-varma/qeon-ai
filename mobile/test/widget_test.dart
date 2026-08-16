@@ -5,6 +5,7 @@ import 'package:qeonai/features/auth/onboarding_screen.dart';
 import 'package:qeonai/features/integrations/connected_apps_screen.dart';
 import 'package:qeonai/features/integrations/email_agent_screen.dart';
 import 'package:qeonai/features/settings/privacy_screen.dart';
+import 'package:qeonai/features/settings/activity_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -120,6 +121,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Type DELETE to confirm.'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('security activity presents a safe human-readable action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ActivityEntry(
+            activity: {
+              'action': 'gmail.draft_approved_and_sent',
+              'created_at': '2026-08-16T12:00:00Z',
+              'details': {'gmail_message_id': 'hidden-from-the-list'},
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Email approved and sent'), findsOneWidget);
+    expect(find.text('hidden-from-the-list'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

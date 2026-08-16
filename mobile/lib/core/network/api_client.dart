@@ -151,6 +151,16 @@ class ApiClient {
     );
   }
 
+  Future<List<Map<String, dynamic>>> listActivity({int limit = 50}) async {
+    final response = await dio.get<List<dynamic>>(
+      '/users/me/activity',
+      queryParameters: {'limit': limit},
+    );
+    return (response.data ?? const []).whereType<Map<String, dynamic>>().toList(
+      growable: false,
+    );
+  }
+
   Stream<ChatStreamEvent> streamChat(String message) async* {
     final response = await dio.post<ResponseBody>(
       '/chat/stream',

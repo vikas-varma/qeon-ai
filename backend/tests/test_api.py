@@ -126,8 +126,12 @@ def test_create_task() -> None:
     assert response.json()["title"] == "Daily brief"
 
     listed = client.get("/api/v1/tasks")
+    activity = client.get("/api/v1/users/me/activity")
     assert listed.status_code == 200
     assert [task["id"] for task in listed.json()] == [response.json()["id"]]
+    assert activity.status_code == 200
+    assert activity.json()[0]["action"] == "task.created"
+    assert "instruction" not in activity.json()[0]["details"]
 
 
 def test_tasks_are_isolated_by_verified_user(monkeypatch: MonkeyPatch) -> None:

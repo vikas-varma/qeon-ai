@@ -16,6 +16,7 @@ import '../../features/integrations/email_agent_screen.dart';
 import '../../features/memory/memory_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/settings/appearance_screen.dart';
+import '../../features/settings/activity_screen.dart';
 import '../../features/settings/notifications_screen.dart';
 import '../../features/settings/privacy_screen.dart';
 import '../../features/splash/splash_screen.dart';
@@ -94,6 +95,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const NotificationsScreen(),
       ),
       GoRoute(path: '/privacy', builder: (_, _) => const PrivacyScreen()),
+      GoRoute(path: '/activity', builder: (_, _) => const ActivityScreen()),
       GoRoute(path: '/account', builder: (_, _) => const AccountScreen()),
     ],
     errorBuilder: (context, state) => Scaffold(

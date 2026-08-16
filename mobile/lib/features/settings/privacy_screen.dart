@@ -108,6 +108,13 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                     onTap: () => context.push('/connected-apps'),
                   ),
                   const Divider(),
+                  SettingsTile(
+                    icon: Icons.history_rounded,
+                    title: 'Security activity',
+                    subtitle: 'Review task, memory, and Gmail actions',
+                    onTap: () => context.push('/activity'),
+                  ),
+                  const Divider(),
                   const SettingsTile(
                     icon: Icons.devices_rounded,
                     title: 'Active sessions',
