@@ -277,5 +277,71 @@ def test_chat_stream(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(chat_service.settings, "ai_provider", "mock")
     response = client.post("/api/v1/chat/stream", json={"message": "Hello"})
     assert response.status_code == 200
+    assert '"type": "meta"' in response.text
     assert '"type": "delta"' in response.text
     assert '"type": "done"' in response.text
+
+    conversations = client.get("/api/v1/chat/conversations")
+    assert conversations.status_code == 200
+    assert len(conversations.json()) == 1
+    assert conversations.json()[0]["title"] == "Hello"
+    assert conversations.json()[0]["message_count"] == 2
+
+    conversation_id = conversations.json()[0]["id"]
+    detail = client.get(f"/api/v1/chat/conversations/{conversation_id}")
+    assert detail.status_code == 200
+    assert [message["role"] for message in detail.json()["messages"]] == [
+        "user",
+        "assistant",
+    ]
+    assert detail.json()["messages"][0]["content"] == "Hello"
+
+
+def test_conversations_are_isolated_and_deletable(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "auth_required", True)
+    monkeypatch.setattr(chat_service.settings, "ai_provider", "mock")
+    monkeypatch.setattr(
+        security,
+        "verify_firebase_id_token",
+        lambda token: {
+            "uid": token,
+            "email": f"{token}@example.com",
+            "name": token,
+        },
+    )
+
+    created = client.post(
+        "/api/v1/chat/stream",
+        json={"message": "My private conversation"},
+        headers={"Authorization": "Bearer conversation-owner"},
+    )
+    owner_list = client.get(
+        "/api/v1/chat/conversations",
+        headers={"Authorization": "Bearer conversation-owner"},
+    )
+    other_list = client.get(
+        "/api/v1/chat/conversations",
+        headers={"Authorization": "Bearer another-user"},
+    )
+
+    assert created.status_code == 200
+    assert len(owner_list.json()) == 1
+    assert other_list.json() == []
+
+    conversation_id = owner_list.json()[0]["id"]
+    forbidden = client.get(
+        f"/api/v1/chat/conversations/{conversation_id}",
+        headers={"Authorization": "Bearer another-user"},
+    )
+    deleted = client.delete(
+        f"/api/v1/chat/conversations/{conversation_id}",
+        headers={"Authorization": "Bearer conversation-owner"},
+    )
+    after_delete = client.get(
+        "/api/v1/chat/conversations",
+        headers={"Authorization": "Bearer conversation-owner"},
+    )
+
+    assert forbidden.status_code == 404
+    assert deleted.status_code == 204
+    assert after_delete.json() == []

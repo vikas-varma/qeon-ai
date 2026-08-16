@@ -161,10 +161,34 @@ class ApiClient {
     );
   }
 
-  Stream<ChatStreamEvent> streamChat(String message) async* {
+  Future<List<Map<String, dynamic>>> listConversations({int limit = 50}) async {
+    final response = await dio.get<List<dynamic>>(
+      '/chat/conversations',
+      queryParameters: {'limit': limit},
+    );
+    return (response.data ?? const []).whereType<Map<String, dynamic>>().toList(
+      growable: false,
+    );
+  }
+
+  Future<Map<String, dynamic>> getConversation(String conversationId) async {
+    final response = await dio.get<Map<String, dynamic>>(
+      '/chat/conversations/$conversationId',
+    );
+    return response.data ?? const {};
+  }
+
+  Future<void> deleteConversation(String conversationId) async {
+    await dio.delete<void>('/chat/conversations/$conversationId');
+  }
+
+  Stream<ChatStreamEvent> streamChat(
+    String message, {
+    String? conversationId,
+  }) async* {
     final response = await dio.post<ResponseBody>(
       '/chat/stream',
-      data: {'message': message},
+      data: {'message': message, 'conversation_id': ?conversationId},
       options: Options(responseType: ResponseType.stream),
     );
     final body = response.data;
@@ -182,14 +206,20 @@ class ApiClient {
       yield ChatStreamEvent(
         type: data['type'] as String? ?? 'error',
         text: data['text'] as String? ?? data['message'] as String? ?? '',
+        conversationId: data['conversation_id'] as String?,
       );
     }
   }
 }
 
 class ChatStreamEvent {
-  const ChatStreamEvent({required this.type, required this.text});
+  const ChatStreamEvent({
+    required this.type,
+    required this.text,
+    this.conversationId,
+  });
 
   final String type;
   final String text;
+  final String? conversationId;
 }

@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/cosmic_logo.dart';
 import '../../core/widgets/qeon_components.dart';
-import '../../data/mock_data.dart';
+import '../../state/app_state.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recent =
+        ref
+            .watch(conversationsProvider)
+            .asData
+            ?.value
+            .take(3)
+            .toList(growable: false) ??
+        const [];
     final prompts = [
       ('Write', Icons.edit_rounded),
       ('Plan', Icons.event_note_rounded),
@@ -161,30 +170,47 @@ class HomeScreen extends StatelessWidget {
           ),
           QeonCard(
             padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                for (final conversation in mockConversations.take(3)) ...[
-                  ListTile(
-                    onTap: () => context.push('/chat'),
-                    leading: CircleIcon(
-                      icon: conversation.icon,
-                      color: AppColors.primary,
-                      size: 38,
+            child: recent.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(18),
+                    child: Text(
+                      'Start a chat and your recent conversations will appear here.',
+                      style: TextStyle(color: AppColors.textMuted),
                     ),
-                    title: Text(
-                      conversation.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    subtitle: Text(conversation.time),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                  )
+                : Column(
+                    children: [
+                      for (var index = 0; index < recent.length; index++) ...[
+                        Builder(
+                          builder: (context) {
+                            final conversation = recent[index];
+                            return ListTile(
+                              onTap: () => context.push(
+                                '/chat?conversationId=${Uri.encodeQueryComponent(conversation.id)}',
+                              ),
+                              leading: CircleIcon(
+                                icon: conversation.icon,
+                                color: AppColors.primary,
+                                size: 38,
+                              ),
+                              title: Text(
+                                conversation.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              subtitle: Text(conversation.time),
+                              trailing: const Icon(Icons.chevron_right_rounded),
+                            );
+                          },
+                        ),
+                        if (index != recent.length - 1)
+                          const Divider(height: 1),
+                      ],
+                    ],
                   ),
-                  if (conversation != mockConversations.take(3).last)
-                    const Divider(height: 1),
-                ],
-              ],
-            ),
           ),
         ],
       ),

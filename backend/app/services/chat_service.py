@@ -1,5 +1,4 @@
-import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 
 import httpx
 
@@ -22,19 +21,32 @@ def get_ai_provider() -> AIProvider:
     return MockAIProvider()
 
 
-async def stream_answer(message: str) -> AsyncIterator[str]:
+def _system_prompt(history: Sequence[tuple[str, str]]) -> str:
+    if not history:
+        return SYSTEM_PROMPT
+    transcript = "\n".join(f"{role}: {content}" for role, content in history)
+    return (
+        f"{SYSTEM_PROMPT}\n\n"
+        "Continue the current conversation using this recent context. "
+        "Do not mention that a transcript was supplied.\n"
+        f"{transcript[-12_000:]}"
+    )
+
+
+async def stream_answer(
+    message: str, *, history: Sequence[tuple[str, str]] = ()
+) -> AsyncIterator[dict[str, str]]:
     try:
         provider = get_ai_provider()
-        async for text in provider.stream_text(message=message, system_prompt=SYSTEM_PROMPT):
-            payload = json.dumps({"type": "delta", "text": text})
-            yield f"data: {payload}\n\n"
+        async for text in provider.stream_text(
+            message=message,
+            system_prompt=_system_prompt(history),
+        ):
+            yield {"type": "delta", "text": text}
     except (httpx.HTTPError, RuntimeError) as exc:
-        payload = json.dumps(
-            {
-                "type": "error",
-                "message": "The AI service is temporarily unavailable. Please try again.",
-                "detail": type(exc).__name__,
-            }
-        )
-        yield f"data: {payload}\n\n"
-    yield f"data: {json.dumps({'type': 'done'})}\n\n"
+        yield {
+            "type": "error",
+            "message": "The AI service is temporarily unavailable. Please try again.",
+            "detail": type(exc).__name__,
+        }
+    yield {"type": "done"}

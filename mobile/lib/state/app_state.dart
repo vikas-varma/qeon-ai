@@ -155,17 +155,100 @@ final memoryEnabledProvider = NotifierProvider<MemoryEnabledController, bool>(
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
+class ConversationsController extends AsyncNotifier<List<ConversationModel>> {
+  @override
+  Future<List<ConversationModel>> build() async {
+    if (AppConfig.useMockData) return List.of(mockConversations);
+    final rows = await ref.read(apiClientProvider).listConversations();
+    return rows.map(_conversationFromJson).toList(growable: false);
+  }
+
+  Future<void> delete(String id) async {
+    if (!AppConfig.useMockData) {
+      await ref.read(apiClientProvider).deleteConversation(id);
+    }
+    final current = state.asData?.value ?? const <ConversationModel>[];
+    state = AsyncData(
+      current.where((conversation) => conversation.id != id).toList(),
+    );
+  }
+
+  ConversationModel _conversationFromJson(Map<String, dynamic> row) {
+    final updatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
+    return ConversationModel(
+      id: row['id'] as String? ?? '',
+      title: row['title'] as String? ?? 'Conversation',
+      preview: row['preview'] as String? ?? '',
+      time: _relativeTime(updatedAt),
+      icon: Icons.auto_awesome_rounded,
+      pinned: row['pinned'] as bool? ?? false,
+    );
+  }
+
+  String _relativeTime(DateTime? value) {
+    if (value == null) return '';
+    final difference = DateTime.now().difference(value.toLocal());
+    if (difference.inMinutes < 1) return 'Just now';
+    if (difference.inHours < 1) return '${difference.inMinutes} min ago';
+    if (difference.inDays < 1) return '${difference.inHours} hr ago';
+    if (difference.inDays == 1) return 'Yesterday';
+    return '${difference.inDays} days ago';
+  }
+}
+
+final conversationsProvider =
+    AsyncNotifierProvider<ConversationsController, List<ConversationModel>>(
+      ConversationsController.new,
+    );
+
 class ChatController extends Notifier<List<ChatMessage>> {
   bool _sending = false;
+  String? _conversationId;
+  int _loadGeneration = 0;
 
   @override
   List<ChatMessage> build() => const [
     ChatMessage(
       text:
-          'Hello Vikas. I’m ready to help you plan, research, write, and organize your work.',
+          'Hello. I’m ready to help you plan, research, write, and organize your work.',
       isUser: false,
     ),
   ];
+
+  Future<void> openConversation(String? conversationId) async {
+    final generation = ++_loadGeneration;
+    _conversationId = conversationId;
+    _sending = false;
+    if (conversationId == null || AppConfig.useMockData) {
+      state = build();
+      return;
+    }
+    state = const [ChatMessage(text: 'Loading conversation…', isUser: false)];
+    try {
+      final row = await ref
+          .read(apiClientProvider)
+          .getConversation(conversationId);
+      if (generation != _loadGeneration) return;
+      final messages = row['messages'] as List<dynamic>? ?? const [];
+      state = messages
+          .whereType<Map<String, dynamic>>()
+          .map((message) {
+            return ChatMessage(
+              text: message['content'] as String? ?? '',
+              isUser: message['role'] == 'user',
+            );
+          })
+          .toList(growable: false);
+    } catch (_) {
+      if (generation != _loadGeneration) return;
+      state = const [
+        ChatMessage(
+          text: 'Could not load this conversation. Please try again.',
+          isUser: false,
+        ),
+      ];
+    }
+  }
 
   Future<void> send(String text) async {
     final message = text.trim();
@@ -186,7 +269,12 @@ class ChatController extends Notifier<List<ChatMessage>> {
     var answer = '';
     try {
       await for (final event
-          in ref.read(apiClientProvider).streamChat(message)) {
+          in ref
+              .read(apiClientProvider)
+              .streamChat(message, conversationId: _conversationId)) {
+        if (event.type == 'meta' && event.conversationId != null) {
+          _conversationId = event.conversationId;
+        }
         if (event.type == 'delta') {
           answer += event.text;
           _replaceLast(answer);
@@ -203,6 +291,7 @@ class ChatController extends Notifier<List<ChatMessage>> {
       );
     } finally {
       _sending = false;
+      ref.invalidate(conversationsProvider);
     }
   }
 

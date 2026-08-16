@@ -50,6 +50,27 @@ class ChatRequest(BaseModel):
     agent_id: str | None = None
 
 
+class MessageOut(BaseModel):
+    id: str
+    role: Literal["user", "assistant"]
+    content: str
+    created_at: datetime
+
+
+class ConversationOut(BaseModel):
+    id: str
+    title: str
+    preview: str
+    pinned: bool
+    message_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class ConversationDetail(ConversationOut):
+    messages: list[MessageOut]
+
+
 class AccountDataDeletion(BaseModel):
     confirmation: Literal["DELETE"]
 

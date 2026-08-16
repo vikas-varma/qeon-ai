@@ -7,7 +7,9 @@ import '../../core/widgets/cosmic_logo.dart';
 import '../../state/app_state.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({super.key, this.conversationId});
+
+  final String? conversationId;
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -15,6 +17,16 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => ref
+          .read(chatProvider.notifier)
+          .openConversation(widget.conversationId),
+    );
+  }
 
   @override
   void dispose() {

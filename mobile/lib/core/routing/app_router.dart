@@ -68,7 +68,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      GoRoute(path: '/chat', builder: (_, _) => const ChatScreen()),
+      GoRoute(
+        path: '/chat',
+        builder: (_, state) => ChatScreen(
+          conversationId: state.uri.queryParameters['conversationId'],
+        ),
+      ),
       GoRoute(path: '/voice', builder: (_, _) => const VoiceScreen()),
       GoRoute(
         path: '/agent/:id',
