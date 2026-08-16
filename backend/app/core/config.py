@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     firebase_credentials_json: str | None = None
     firebase_check_revoked: bool = True
     jwt_audience: str = "qeonai"
+    rate_limit_requests_per_minute: int = 120
+    rate_limit_email_sends_per_minute: int = 5
     google_client_id: str | None = None
     google_client_secret: str | None = None
     google_oauth_redirect_uri: str = "http://localhost:8000/api/v1/integrations/gmail/callback"

@@ -1,3 +1,4 @@
+import asyncio
 import base64
 from email import policy
 from email.parser import BytesParser
@@ -9,6 +10,7 @@ from pytest import MonkeyPatch
 
 from app.core import security
 from app.core.config import settings
+from app.core.middleware import SlidingWindowRateLimiter
 from app.integrations.google_workspace import google_workspace_service
 from app.main import app
 from app.schemas.integrations import GmailDraftCreate, GmailSendOut
@@ -21,6 +23,33 @@ def test_health() -> None:
     response = client.get("/api/v1/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+    assert response.headers["x-request-id"]
+
+
+def test_readiness_checks_database() -> None:
+    response = client.get("/api/v1/ready")
+
+    assert response.status_code == 200
+    assert response.json()["ready"] is True
+    assert response.json()["checks"]["database"] is True
+
+
+def test_sliding_window_rate_limiter_rejects_excess_requests() -> None:
+    async def exercise() -> tuple[tuple[bool, int], tuple[bool, int], tuple[bool, int]]:
+        limiter = SlidingWindowRateLimiter()
+        first = await limiter.check("user", limit=2, now=100)
+        second = await limiter.check("user", limit=2, now=101)
+        third = await limiter.check("user", limit=2, now=102)
+        return first, second, third
+
+    first, second, third = asyncio.run(exercise())
+
+    assert first == (True, 0)
+    assert second == (True, 0)
+    assert third[0] is False
+    assert third[1] > 0
 
 
 def test_authentication_is_required_when_enabled(monkeypatch: MonkeyPatch) -> None:

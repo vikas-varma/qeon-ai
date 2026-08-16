@@ -30,6 +30,10 @@ services:
         sync: false
       - key: QEON_FIREBASE_CHECK_REVOKED
         value: "true"
+      - key: QEON_RATE_LIMIT_REQUESTS_PER_MINUTE
+        value: "120"
+      - key: QEON_RATE_LIMIT_EMAIL_SENDS_PER_MINUTE
+        value: "5"
       - key: QEON_GOOGLE_CLIENT_ID
         sync: false
       - key: QEON_GOOGLE_CLIENT_SECRET
