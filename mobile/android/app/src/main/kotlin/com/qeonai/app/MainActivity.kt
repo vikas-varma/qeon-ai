@@ -1,4 +1,4 @@
-package com.example.qeonai
+package com.qeonai.app
 
 import io.flutter.embedding.android.FlutterActivity
 
