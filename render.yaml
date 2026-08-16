@@ -20,6 +20,15 @@ services:
         value: /api/v1
       - key: QEON_AI_PROVIDER
         value: mock
+      # Keep false until the Android Firebase app is configured and deployed.
+      - key: QEON_AUTH_REQUIRED
+        value: "false"
+      - key: QEON_FIREBASE_PROJECT_ID
+        sync: false
+      - key: QEON_FIREBASE_CREDENTIALS_JSON
+        sync: false
+      - key: QEON_FIREBASE_CHECK_REVOKED
+        value: "true"
       - key: QEON_GOOGLE_CLIENT_ID
         sync: false
       - key: QEON_GOOGLE_CLIENT_SECRET

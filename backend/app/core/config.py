@@ -22,7 +22,10 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-3.5-flash-lite"
+    auth_required: bool = False
     firebase_project_id: str | None = None
+    firebase_credentials_json: str | None = None
+    firebase_check_revoked: bool = True
     jwt_audience: str = "qeonai"
     google_client_id: str | None = None
     google_client_secret: str | None = None
