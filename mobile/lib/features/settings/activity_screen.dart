@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/qeon_components.dart';
+import '../../state/app_state.dart';
 
-class ActivityScreen extends StatefulWidget {
+class ActivityScreen extends ConsumerStatefulWidget {
   const ActivityScreen({super.key});
 
   @override
-  State<ActivityScreen> createState() => _ActivityScreenState();
+  ConsumerState<ActivityScreen> createState() => _ActivityScreenState();
 }
 
-class _ActivityScreenState extends State<ActivityScreen> {
-  final _api = ApiClient();
+class _ActivityScreenState extends ConsumerState<ActivityScreen> {
   bool _loading = true;
   String? _error;
   List<Map<String, dynamic>> _activity = const [];
@@ -29,7 +29,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
       _error = null;
     });
     try {
-      final activity = await _api.listActivity();
+      final activity = await ref.read(apiClientProvider).listActivity();
       if (!mounted) return;
       setState(() {
         _activity = activity;

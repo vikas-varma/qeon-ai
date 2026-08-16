@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/qeon_components.dart';
+import '../../state/app_state.dart';
 
-class ConnectedAppsScreen extends StatefulWidget {
+class ConnectedAppsScreen extends ConsumerStatefulWidget {
   const ConnectedAppsScreen({super.key});
 
   @override
-  State<ConnectedAppsScreen> createState() => _ConnectedAppsScreenState();
+  ConsumerState<ConnectedAppsScreen> createState() =>
+      _ConnectedAppsScreenState();
 }
 
-class _ConnectedAppsScreenState extends State<ConnectedAppsScreen> {
-  final _api = ApiClient();
+class _ConnectedAppsScreenState extends ConsumerState<ConnectedAppsScreen> {
   bool _loading = true;
   bool _connected = false;
   String? _email;
@@ -27,7 +28,7 @@ class _ConnectedAppsScreenState extends State<ConnectedAppsScreen> {
 
   Future<void> _refresh() async {
     try {
-      final status = await _api.gmailStatus();
+      final status = await ref.read(apiClientProvider).gmailStatus();
       if (!mounted) return;
       setState(() {
         _connected = status['connected'] as bool? ?? false;
@@ -58,7 +59,7 @@ class _ConnectedAppsScreenState extends State<ConnectedAppsScreen> {
       _error = null;
     });
     try {
-      final url = await _api.connectGmail();
+      final url = await ref.read(apiClientProvider).connectGmail();
       if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
         throw StateError('Could not open Google sign-in.');
       }
@@ -86,7 +87,7 @@ class _ConnectedAppsScreenState extends State<ConnectedAppsScreen> {
   Future<void> _disconnect() async {
     setState(() => _loading = true);
     try {
-      await _api.disconnectGmail();
+      await ref.read(apiClientProvider).disconnectGmail();
       await _refresh();
     } catch (_) {
       if (!mounted) return;

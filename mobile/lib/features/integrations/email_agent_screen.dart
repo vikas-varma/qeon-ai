@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/qeon_components.dart';
+import '../../state/app_state.dart';
 
-class EmailAgentScreen extends StatefulWidget {
+class EmailAgentScreen extends ConsumerStatefulWidget {
   const EmailAgentScreen({super.key});
 
   @override
-  State<EmailAgentScreen> createState() => _EmailAgentScreenState();
+  ConsumerState<EmailAgentScreen> createState() => _EmailAgentScreenState();
 }
 
-class _EmailAgentScreenState extends State<EmailAgentScreen> {
-  final _api = ApiClient();
+class _EmailAgentScreenState extends ConsumerState<EmailAgentScreen> {
   final _searchController = TextEditingController(text: 'in:inbox');
   bool _loading = true;
   bool _connected = false;
@@ -39,7 +39,7 @@ class _EmailAgentScreenState extends State<EmailAgentScreen> {
 
   Future<void> _loadStatus() async {
     try {
-      final status = await _api.gmailStatus();
+      final status = await ref.read(apiClientProvider).gmailStatus();
       if (!mounted) return;
       setState(() {
         _connected = status['connected'] as bool? ?? false;
@@ -62,7 +62,7 @@ class _EmailAgentScreenState extends State<EmailAgentScreen> {
       _error = null;
     });
     try {
-      final result = await _api.summarizeGmail();
+      final result = await ref.read(apiClientProvider).summarizeGmail();
       if (!mounted) return;
       setState(
         () => _summary = result['summary'] as String? ?? 'No summary returned.',
@@ -85,7 +85,7 @@ class _EmailAgentScreenState extends State<EmailAgentScreen> {
       _error = null;
     });
     try {
-      final messages = await _api.searchGmail(query);
+      final messages = await ref.read(apiClientProvider).searchGmail(query);
       if (!mounted) return;
       setState(() => _messages = messages);
     } catch (_) {
@@ -111,7 +111,8 @@ class _EmailAgentScreenState extends State<EmailAgentScreen> {
       _error = null;
     });
     try {
-      final created = await _api.createGmailDraft(
+      final api = ref.read(apiClientProvider);
+      final created = await api.createGmailDraft(
         to: draft['to']!,
         cc: draft['cc'],
         subject: draft['subject']!,
@@ -125,7 +126,7 @@ class _EmailAgentScreenState extends State<EmailAgentScreen> {
         builder: (_) => EmailDraftReviewSheet(
           draft: created,
           onApprove: () =>
-              _api.sendApprovedGmailDraft(created['approval_id'] as String),
+              api.sendApprovedGmailDraft(created['approval_id'] as String),
         ),
       );
       if (sent == true && mounted) {
