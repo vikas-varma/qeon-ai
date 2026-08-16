@@ -1,9 +1,17 @@
+import base64
+from email import policy
+from email.parser import BytesParser
+from unittest.mock import AsyncMock
+from uuid import uuid4
+
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 
 from app.core import security
 from app.core.config import settings
+from app.integrations.google_workspace import google_workspace_service
 from app.main import app
+from app.schemas.integrations import GmailDraftCreate, GmailSendOut
 from app.services import chat_service
 
 client = TestClient(app)
@@ -137,6 +145,57 @@ def test_memories_persist_and_can_be_cleared() -> None:
     assert [memory["id"] for memory in listed.json()] == [created.json()["id"]]
     assert cleared.status_code == 204
     assert after_clear.json() == []
+
+
+def test_gmail_draft_mime_is_encoded_safely() -> None:
+    raw = google_workspace_service._encode_message(
+        "owner@example.com",
+        GmailDraftCreate(
+            to="recipient@example.com",
+            subject="Project update",
+            body="The work is ready for review.",
+        ),
+    )
+    padded = raw + "=" * (-len(raw) % 4)
+    message = BytesParser(policy=policy.default).parsebytes(base64.urlsafe_b64decode(padded))
+
+    assert message["From"] == "owner@example.com"
+    assert message["To"] == "recipient@example.com"
+    assert message["Subject"] == "Project update"
+    assert message.get_body(preferencelist=("plain",)).get_content().strip() == (
+        "The work is ready for review."
+    )
+
+
+def test_gmail_send_rejects_missing_explicit_approval() -> None:
+    response = client.post(
+        f"/api/v1/integrations/gmail/drafts/{uuid4()}/send",
+        json={"approved": False},
+    )
+
+    assert response.status_code == 422
+
+
+def test_gmail_send_calls_service_after_explicit_approval(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    approval_id = uuid4()
+    send = AsyncMock(
+        return_value=GmailSendOut(
+            approval_id=str(approval_id),
+            gmail_message_id="gmail-message-1",
+        )
+    )
+    monkeypatch.setattr(google_workspace_service, "send_draft", send)
+
+    response = client.post(
+        f"/api/v1/integrations/gmail/drafts/{approval_id}/send",
+        json={"approved": True},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "sent"
+    send.assert_awaited_once()
 
 
 def test_chat_stream(monkeypatch: MonkeyPatch) -> None:

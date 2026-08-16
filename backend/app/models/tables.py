@@ -109,6 +109,24 @@ class ConnectedAccount(TimestampMixin, Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class EmailDraftApproval(TimestampMixin, Base):
+    __tablename__ = "email_draft_approvals"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    connected_account_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("connected_accounts.id", ondelete="CASCADE"),
+        index=True,
+    )
+    gmail_draft_id: Mapped[str] = mapped_column(String(180), unique=True)
+    status: Mapped[str] = mapped_column(String(32), default="pending_approval")
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class AgentRun(TimestampMixin, Base):
     __tablename__ = "agent_runs"
 
