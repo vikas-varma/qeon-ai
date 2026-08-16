@@ -91,9 +91,14 @@ class AgentDetailScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 18),
             GradientButton(
-              label: 'Chat with ${agent.name}',
-              icon: Icons.chat_bubble_rounded,
-              onPressed: () => context.push('/chat'),
+              label: agent.id == 'email'
+                  ? 'Open Email Agent'
+                  : 'Chat with ${agent.name}',
+              icon: agent.id == 'email'
+                  ? Icons.mark_email_read_outlined
+                  : Icons.chat_bubble_rounded,
+              onPressed: () =>
+                  context.push(agent.id == 'email' ? '/email-agent' : '/chat'),
             ),
             const SizedBox(height: 18),
             const SectionTitle('Recent activity'),

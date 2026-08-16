@@ -12,6 +12,7 @@ import '../../features/chat/voice_screen.dart';
 import '../../features/history/history_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/integrations/connected_apps_screen.dart';
+import '../../features/integrations/email_agent_screen.dart';
 import '../../features/memory/memory_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/settings/appearance_screen.dart';
@@ -82,6 +83,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/connected-apps',
         builder: (_, _) => const ConnectedAppsScreen(),
+      ),
+      GoRoute(
+        path: '/email-agent',
+        builder: (_, _) => const EmailAgentScreen(),
       ),
       GoRoute(path: '/appearance', builder: (_, _) => const AppearanceScreen()),
       GoRoute(
