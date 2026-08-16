@@ -33,52 +33,115 @@ final agentsProvider = NotifierProvider<AgentsController, List<AgentModel>>(
   AgentsController.new,
 );
 
-class TasksController extends Notifier<List<TaskModel>> {
+class TasksController extends AsyncNotifier<List<TaskModel>> {
   @override
-  List<TaskModel> build() => List.of(mockTasks);
-
-  void togglePause(String id) {
-    state = [
-      for (final task in state)
-        if (task.id == id) task.copyWith(paused: !task.paused) else task,
-    ];
+  Future<List<TaskModel>> build() async {
+    if (AppConfig.useMockData) return List.of(mockTasks);
+    final rows = await ref.read(apiClientProvider).listTasks();
+    return rows.map(_taskFromJson).toList(growable: false);
   }
 
-  void addQuickTask(String title) {
-    state = [
-      ...state,
-      TaskModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: title,
-        subtitle: 'Created from the Qeon AI starter interface.',
-        schedule: 'Today',
-        icon: Icons.auto_awesome_rounded,
-        color: const Color(0xFF6D35F6),
-        status: TaskStatus.scheduled,
-      ),
-    ];
+  Future<void> addTask({
+    required String instruction,
+    required String schedule,
+    required bool requiresApproval,
+  }) async {
+    final title = instruction.length > 80
+        ? '${instruction.substring(0, 77)}...'
+        : instruction;
+    final current = state.asData?.value ?? const <TaskModel>[];
+    if (AppConfig.useMockData) {
+      state = AsyncData([
+        ...current,
+        TaskModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: title,
+          subtitle: instruction,
+          schedule: schedule,
+          icon: Icons.auto_awesome_rounded,
+          color: const Color(0xFF6D35F6),
+          status: TaskStatus.scheduled,
+        ),
+      ]);
+      return;
+    }
+    final row = await ref
+        .read(apiClientProvider)
+        .createTask(
+          title: title,
+          instruction: instruction,
+          schedule: schedule,
+          requiresApproval: requiresApproval,
+        );
+    state = AsyncData([_taskFromJson(row), ...current]);
   }
 
-  void delete(String id) =>
-      state = state.where((task) => task.id != id).toList();
+  Future<void> delete(String id) async {
+    if (!AppConfig.useMockData) {
+      await ref.read(apiClientProvider).deleteTask(id);
+    }
+    final current = state.asData?.value ?? const <TaskModel>[];
+    state = AsyncData(current.where((task) => task.id != id).toList());
+  }
+
+  TaskModel _taskFromJson(Map<String, dynamic> row) {
+    final statusName = row['status'] as String? ?? 'scheduled';
+    final status = TaskStatus.values.firstWhere(
+      (value) => value.name == statusName,
+      orElse: () => TaskStatus.scheduled,
+    );
+    return TaskModel(
+      id: row['id'] as String? ?? '',
+      title: row['title'] as String? ?? 'Task',
+      subtitle: row['instruction'] as String? ?? '',
+      schedule: row['schedule'] as String? ?? 'once',
+      icon: Icons.auto_awesome_rounded,
+      color: const Color(0xFF6D35F6),
+      status: status,
+    );
+  }
 }
 
-final tasksProvider = NotifierProvider<TasksController, List<TaskModel>>(
+final tasksProvider = AsyncNotifierProvider<TasksController, List<TaskModel>>(
   TasksController.new,
 );
 
-class MemoryController extends Notifier<List<MemoryModel>> {
+class MemoryController extends AsyncNotifier<List<MemoryModel>> {
   @override
-  List<MemoryModel> build() => List.of(mockMemories);
+  Future<List<MemoryModel>> build() async {
+    if (AppConfig.useMockData) return List.of(mockMemories);
+    final rows = await ref.read(apiClientProvider).listMemories();
+    return rows.map(_memoryFromJson).toList(growable: false);
+  }
 
-  void delete(String id) =>
-      state = state.where((memory) => memory.id != id).toList();
-  void clear() => state = [];
+  Future<void> delete(String id) async {
+    if (!AppConfig.useMockData) {
+      await ref.read(apiClientProvider).deleteMemory(id);
+    }
+    final current = state.asData?.value ?? const <MemoryModel>[];
+    state = AsyncData(current.where((memory) => memory.id != id).toList());
+  }
+
+  Future<void> clear() async {
+    if (!AppConfig.useMockData) {
+      await ref.read(apiClientProvider).clearMemories();
+    }
+    state = const AsyncData([]);
+  }
+
+  MemoryModel _memoryFromJson(Map<String, dynamic> row) => MemoryModel(
+    id: row['id'] as String? ?? '',
+    category: row['category'] as String? ?? 'General',
+    title: row['title'] as String? ?? 'Memory',
+    value: row['value'] as String? ?? '',
+    icon: Icons.bookmark_outline_rounded,
+  );
 }
 
-final memoriesProvider = NotifierProvider<MemoryController, List<MemoryModel>>(
-  MemoryController.new,
-);
+final memoriesProvider =
+    AsyncNotifierProvider<MemoryController, List<MemoryModel>>(
+      MemoryController.new,
+    );
 
 class MemoryEnabledController extends Notifier<bool> {
   @override

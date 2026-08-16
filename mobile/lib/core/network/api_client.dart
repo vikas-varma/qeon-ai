@@ -100,6 +100,50 @@ class ApiClient {
     return response.data ?? const {};
   }
 
+  Future<List<Map<String, dynamic>>> listTasks() async {
+    final response = await dio.get<List<dynamic>>('/tasks');
+    return (response.data ?? const []).whereType<Map<String, dynamic>>().toList(
+      growable: false,
+    );
+  }
+
+  Future<Map<String, dynamic>> createTask({
+    required String title,
+    required String instruction,
+    required String schedule,
+    required bool requiresApproval,
+  }) async {
+    final response = await dio.post<Map<String, dynamic>>(
+      '/tasks',
+      data: {
+        'title': title,
+        'instruction': instruction,
+        'schedule': schedule,
+        'requires_approval': requiresApproval,
+      },
+    );
+    return response.data ?? const {};
+  }
+
+  Future<void> deleteTask(String taskId) async {
+    await dio.delete<void>('/tasks/$taskId');
+  }
+
+  Future<List<Map<String, dynamic>>> listMemories() async {
+    final response = await dio.get<List<dynamic>>('/memories');
+    return (response.data ?? const []).whereType<Map<String, dynamic>>().toList(
+      growable: false,
+    );
+  }
+
+  Future<void> deleteMemory(String memoryId) async {
+    await dio.delete<void>('/memories/$memoryId');
+  }
+
+  Future<void> clearMemories() async {
+    await dio.delete<void>('/memories');
+  }
+
   Stream<ChatStreamEvent> streamChat(String message) async* {
     final response = await dio.post<ResponseBody>(
       '/chat/stream',

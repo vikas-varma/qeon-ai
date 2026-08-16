@@ -11,7 +11,8 @@ class MemoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final enabled = ref.watch(memoryEnabledProvider);
-    final memories = ref.watch(memoriesProvider);
+    final memoriesState = ref.watch(memoriesProvider);
+    final memories = memoriesState.asData?.value ?? const [];
     final groups = <String, int>{};
     for (final memory in memories) {
       groups[memory.category] = (groups[memory.category] ?? 0) + 1;
@@ -23,6 +24,16 @@ class MemoryScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(18, 4, 18, 24),
         child: ListView(
           children: [
+            if (memoriesState.isLoading) const LinearProgressIndicator(),
+            if (memoriesState.hasError)
+              ListTile(
+                leading: const Icon(Icons.error_outline_rounded),
+                title: const Text('Could not load saved memories.'),
+                trailing: TextButton(
+                  onPressed: () => ref.invalidate(memoriesProvider),
+                  child: const Text('Retry'),
+                ),
+              ),
             QeonCard(
               child: SwitchListTile(
                 value: enabled,
@@ -91,8 +102,20 @@ class MemoryScreen extends ConsumerWidget {
                   ),
                   subtitle: Text(memory.value),
                   trailing: IconButton(
-                    onPressed: () =>
-                        ref.read(memoriesProvider.notifier).delete(memory.id),
+                    onPressed: () async {
+                      try {
+                        await ref
+                            .read(memoriesProvider.notifier)
+                            .delete(memory.id);
+                      } catch (_) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Could not delete this memory.'),
+                          ),
+                        );
+                      }
+                    },
                     icon: const Icon(Icons.delete_outline_rounded),
                   ),
                 ),
@@ -123,7 +146,7 @@ class MemoryScreen extends ConsumerWidget {
       builder: (_) => AlertDialog(
         title: const Text('Clear all memory?'),
         content: const Text(
-          'This removes every saved memory in this demo. This action cannot be undone.',
+          'This permanently removes every saved memory. This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -137,6 +160,14 @@ class MemoryScreen extends ConsumerWidget {
         ],
       ),
     );
-    if (accepted == true) ref.read(memoriesProvider.notifier).clear();
+    if (accepted != true) return;
+    try {
+      await ref.read(memoriesProvider.notifier).clear();
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not clear saved memories.')),
+      );
+    }
   }
 }

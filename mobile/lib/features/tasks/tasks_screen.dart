@@ -15,12 +15,11 @@ class TasksScreen extends ConsumerStatefulWidget {
 }
 
 class _TasksScreenState extends ConsumerState<TasksScreen> {
-  TaskStatus selected = TaskStatus.running;
+  TaskStatus selected = TaskStatus.scheduled;
 
   @override
   Widget build(BuildContext context) {
-    final allTasks = ref.watch(tasksProvider);
-    final tasks = allTasks.where((task) => task.status == selected).toList();
+    final tasksState = ref.watch(tasksProvider);
 
     return QeonPage(
       child: Column(
@@ -29,8 +28,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             title: 'Tasks',
             subtitle: 'Track what Qeon AI is doing.',
             trailing: IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.filter_alt_outlined),
+              onPressed: () => ref.invalidate(tasksProvider),
+              icon: const Icon(Icons.refresh_rounded),
             ),
           ),
           const SizedBox(height: 14),
@@ -52,83 +51,116 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: tasks.isEmpty
-                ? const Center(child: Text('No tasks in this section.'))
-                : ListView.separated(
-                    itemCount: tasks.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final task = tasks[index];
-                      return QeonCard(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleIcon(icon: task.icon, color: task.color),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    task.title,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                    ),
+            child: tasksState.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, _) => _LoadError(
+                message: 'Could not load tasks.',
+                onRetry: () => ref.invalidate(tasksProvider),
+              ),
+              data: (allTasks) {
+                final tasks = allTasks
+                    .where((task) => task.status == selected)
+                    .toList();
+                if (tasks.isEmpty) {
+                  return const Center(child: Text('No tasks in this section.'));
+                }
+                return ListView.separated(
+                  itemCount: tasks.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final task = tasks[index];
+                    return QeonCard(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleIcon(icon: task.icon, color: task.color),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  task.title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    task.subtitle,
-                                    style: const TextStyle(
-                                      color: AppColors.textMuted,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    task.schedule,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            PopupMenuButton<String>(
-                              onSelected: (value) {
-                                if (value == 'pause') {
-                                  ref
-                                      .read(tasksProvider.notifier)
-                                      .togglePause(task.id);
-                                }
-                                if (value == 'delete') {
-                                  ref
-                                      .read(tasksProvider.notifier)
-                                      .delete(task.id);
-                                }
-                              },
-                              itemBuilder: (_) => [
-                                PopupMenuItem(
-                                  value: 'pause',
-                                  child: Text(task.paused ? 'Resume' : 'Pause'),
                                 ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Text('Delete'),
+                                const SizedBox(height: 4),
+                                Text(
+                                  task.subtitle,
+                                  style: const TextStyle(
+                                    color: AppColors.textMuted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  task.schedule,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          ),
+                          PopupMenuButton<String>(
+                            onSelected: (value) async {
+                              if (value != 'delete') return;
+                              try {
+                                await ref
+                                    .read(tasksProvider.notifier)
+                                    .delete(task.id);
+                              } catch (_) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Could not delete the task.'),
+                                  ),
+                                );
+                              }
+                            },
+                            itemBuilder: (_) => const [
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
           GradientButton(
             label: 'Create new task',
             icon: Icons.add_rounded,
             onPressed: () => context.push('/create-task'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadError extends StatelessWidget {
+  const _LoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(message),
+          const SizedBox(height: 8),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );

@@ -16,6 +16,36 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   final titleController = TextEditingController();
   String schedule = 'Every day';
   bool needsApproval = true;
+  bool saving = false;
+
+  Future<void> _save() async {
+    final instruction = titleController.text.trim();
+    if (instruction.length < 2 || saving) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Describe the task in at least 2 characters.'),
+        ),
+      );
+      return;
+    }
+    setState(() => saving = true);
+    try {
+      await ref
+          .read(tasksProvider.notifier)
+          .addTask(
+            instruction: instruction,
+            schedule: schedule,
+            requiresApproval: needsApproval,
+          );
+      if (mounted) context.pop();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not save the task. Try again.')),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -76,18 +106,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             ),
             const SizedBox(height: 22),
             GradientButton(
-              label: 'Save task',
+              label: saving ? 'Saving…' : 'Save task',
               icon: Icons.check_rounded,
-              onPressed: () {
-                ref
-                    .read(tasksProvider.notifier)
-                    .addQuickTask(
-                      titleController.text.isEmpty
-                          ? 'New Qeon AI task'
-                          : titleController.text,
-                    );
-                context.pop();
-              },
+              onPressed: _save,
             ),
           ],
         ),
