@@ -75,7 +75,7 @@ async def get_current_user(
     ``QEON_AUTH_REQUIRED`` is false. A supplied token is always verified.
     """
     if authorization is None:
-        if settings.auth_required:
+        if settings.auth_required or settings.environment == "production":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Authentication is required",

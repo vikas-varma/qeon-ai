@@ -32,6 +32,16 @@ def test_authentication_is_required_when_enabled(monkeypatch: MonkeyPatch) -> No
     assert response.headers["www-authenticate"] == "Bearer"
 
 
+def test_production_never_accepts_demo_identity(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "environment", "production")
+    monkeypatch.setattr(settings, "auth_required", False)
+
+    response = client.get("/api/v1/users/me")
+
+    assert response.status_code == 401
+    assert response.headers["www-authenticate"] == "Bearer"
+
+
 def test_malformed_authorization_header_is_rejected() -> None:
     response = client.get(
         "/api/v1/users/me",
