@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qeonai/app.dart';
 import 'package:qeonai/features/auth/onboarding_screen.dart';
+import 'package:qeonai/features/auth/sign_in_screen.dart';
 import 'package:qeonai/features/integrations/connected_apps_screen.dart';
 import 'package:qeonai/features/integrations/email_agent_screen.dart';
 import 'package:qeonai/features/settings/privacy_screen.dart';
@@ -25,6 +26,22 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: OnboardingScreen()));
 
     expect(find.text('Get started'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('production sign-in has no unauthenticated demo bypass', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: SignInScreen())),
+    );
+
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.textContaining('demo', findRichText: true), findsNothing);
+    final googleButton = tester.widget<OutlinedButton>(
+      find.byKey(const Key('google-sign-in-button')),
+    );
+    expect(googleButton.onPressed, isNull);
     expect(tester.takeException(), isNull);
   });
 

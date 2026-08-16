@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/auth/auth_service.dart';
 import '../../core/widgets/cosmic_logo.dart';
 import '../../core/widgets/qeon_components.dart';
 import '../../state/app_state.dart';
@@ -12,6 +13,10 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authStateProvider).asData?.value;
+    final firstName = (user?.displayName?.trim().isNotEmpty ?? false)
+        ? user!.displayName!.trim().split(' ').first
+        : 'there';
     final recent =
         ref
             .watch(conversationsProvider)
@@ -43,12 +48,15 @@ class HomeScreen extends ConsumerWidget {
                 onPressed: () {},
                 icon: const Icon(Icons.notifications_none_rounded),
               ),
-              const CircleAvatar(radius: 18, child: Text('V')),
+              CircleAvatar(
+                radius: 18,
+                child: Text(firstName.substring(0, 1).toUpperCase()),
+              ),
             ],
           ),
           const SizedBox(height: 22),
           Text(
-            'Good morning, Vikas 👋',
+            'Hello, $firstName 👋',
             style: Theme.of(
               context,
             ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),

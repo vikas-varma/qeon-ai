@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 
 from app.core import security
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.core.middleware import SlidingWindowRateLimiter
 from app.integrations.google_workspace import google_workspace_service
 from app.main import app
@@ -17,6 +17,13 @@ from app.schemas.integrations import GmailDraftCreate, GmailSendOut
 from app.services import chat_service
 
 client = TestClient(app)
+
+
+def test_render_postgres_url_uses_async_driver() -> None:
+    configured = Settings(database_url="postgresql://user:password@db.example/qeonai")
+    assert configured.database_url == (
+        "postgresql+asyncpg://user:password@db.example/qeonai"
+    )
 
 
 def test_health() -> None:

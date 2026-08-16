@@ -61,10 +61,11 @@ class OnboardingScreen extends StatelessWidget {
               icon: Icons.arrow_forward_rounded,
               onPressed: () => context.go('/sign-in'),
             ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => context.go('/home'),
-              child: const Text('Explore demo without signing in'),
+            const SizedBox(height: 16),
+            const Text(
+              'You stay in control of connected services and external actions.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textMuted, fontSize: 12),
             ),
           ],
         ),

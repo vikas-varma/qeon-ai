@@ -21,7 +21,11 @@ services:
       - key: QEON_DATABASE_URL
         sync: false
       - key: QEON_AI_PROVIDER
-        value: mock
+        value: gemini
+      - key: QEON_GEMINI_API_KEY
+        sync: false
+      - key: QEON_GEMINI_MODEL
+        value: gemini-3.5-flash-lite
       - key: QEON_AUTH_REQUIRED
         value: "true"
       - key: QEON_FIREBASE_PROJECT_ID

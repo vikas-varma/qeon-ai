@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../auth/auth_service.dart';
 import '../../features/account/account_screen.dart';
 import '../../features/agents/agent_detail_screen.dart';
 import '../../features/agents/agents_screen.dart';
@@ -25,8 +26,26 @@ import '../../features/tasks/create_task_screen.dart';
 import '../../shell/app_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final authService = ref.watch(authServiceProvider);
+  final authState = ref.watch(authStateProvider);
   return GoRouter(
     initialLocation: '/splash',
+    redirect: (_, state) {
+      final path = state.uri.path;
+      final publicPath =
+          path == '/splash' ||
+          path == '/onboarding' ||
+          path == '/sign-in' ||
+          path == '/privacy';
+      final signedIn = authState.asData?.value != null;
+      if ((!authService.configured || !signedIn) && !publicPath) {
+        return '/sign-in';
+      }
+      if (signedIn && (path == '/sign-in' || path == '/onboarding')) {
+        return '/home';
+      }
+      return null;
+    },
     routes: [
       GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),

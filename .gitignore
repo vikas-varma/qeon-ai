@@ -21,6 +21,7 @@ backend/*.log
 backend/.env
 *.pem
 *.key
+*service-account*.json
 
 # Editors and OS
 .vscode/

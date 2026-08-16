@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import '../config/app_config.dart';
 
 class ApiClient {
-  ApiClient({Dio? dio})
+  ApiClient({Dio? dio, this.tokenProvider})
     : dio =
           dio ??
           Dio(
@@ -15,9 +15,26 @@ class ApiClient {
               receiveTimeout: const Duration(seconds: 45),
               headers: const {'Content-Type': 'application/json'},
             ),
-          );
+          ) {
+    if (tokenProvider != null) {
+      this.dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) async {
+            final token = await tokenProvider!();
+            if (token == null || token.isEmpty) {
+              options.headers.remove('Authorization');
+            } else {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
+            handler.next(options);
+          },
+        ),
+      );
+    }
+  }
 
   final Dio dio;
+  final Future<String?> Function()? tokenProvider;
 
   void setBearerToken(String? token) {
     if (token == null || token.isEmpty) {

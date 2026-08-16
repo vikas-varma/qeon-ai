@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/auth/auth_service.dart';
 import '../core/config/app_config.dart';
 import '../core/network/api_client.dart';
 import '../data/mock_data.dart';
@@ -153,7 +154,9 @@ final memoryEnabledProvider = NotifierProvider<MemoryEnabledController, bool>(
   MemoryEnabledController.new,
 );
 
-final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
+final apiClientProvider = Provider<ApiClient>(
+  (ref) => ApiClient(tokenProvider: ref.watch(authServiceProvider).idToken),
+);
 
 class ConversationsController extends AsyncNotifier<List<ConversationModel>> {
   @override
