@@ -1,13 +1,14 @@
 import json
 import logging
 from functools import lru_cache
-from typing import Annotated, TypedDict
+from typing import Annotated
 
 import firebase_admin
 from fastapi import Header, HTTPException, status
 from firebase_admin import auth, credentials
 from firebase_admin.exceptions import FirebaseError
 from starlette.concurrency import run_in_threadpool
+from typing_extensions import TypedDict
 
 from app.core.config import settings
 

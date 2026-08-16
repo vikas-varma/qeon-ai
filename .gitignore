@@ -13,6 +13,7 @@ backend/.venv/
 backend/.pytest_cache/
 backend/.ruff_cache/
 backend/oauth_tokens.db
+backend/*.db
 backend/*.log
 
 # Environment and secrets

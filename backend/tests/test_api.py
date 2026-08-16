@@ -78,6 +78,66 @@ def test_create_task() -> None:
     assert response.status_code == 201
     assert response.json()["title"] == "Daily brief"
 
+    listed = client.get("/api/v1/tasks")
+    assert listed.status_code == 200
+    assert [task["id"] for task in listed.json()] == [response.json()["id"]]
+
+
+def test_tasks_are_isolated_by_verified_user(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "auth_required", True)
+    monkeypatch.setattr(
+        security,
+        "verify_firebase_id_token",
+        lambda token: {
+            "uid": token,
+            "email": f"{token}@example.com",
+            "name": token,
+        },
+    )
+    payload = {
+        "title": "Private task",
+        "instruction": "Only user one can see this",
+        "schedule": "once",
+        "requires_approval": True,
+    }
+
+    created = client.post(
+        "/api/v1/tasks",
+        json=payload,
+        headers={"Authorization": "Bearer user-one"},
+    )
+    other_user = client.get(
+        "/api/v1/tasks",
+        headers={"Authorization": "Bearer user-two"},
+    )
+    owner = client.get(
+        "/api/v1/tasks",
+        headers={"Authorization": "Bearer user-one"},
+    )
+
+    assert created.status_code == 201
+    assert other_user.json() == []
+    assert [task["id"] for task in owner.json()] == [created.json()["id"]]
+
+
+def test_memories_persist_and_can_be_cleared() -> None:
+    created = client.post(
+        "/api/v1/memories",
+        json={
+            "category": "Preference",
+            "title": "Reply style",
+            "value": "Keep email replies concise",
+        },
+    )
+    listed = client.get("/api/v1/memories")
+    cleared = client.delete("/api/v1/memories")
+    after_clear = client.get("/api/v1/memories")
+
+    assert created.status_code == 201
+    assert [memory["id"] for memory in listed.json()] == [created.json()["id"]]
+    assert cleared.status_code == 204
+    assert after_clear.json() == []
+
 
 def test_chat_stream(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(chat_service.settings, "ai_provider", "mock")
