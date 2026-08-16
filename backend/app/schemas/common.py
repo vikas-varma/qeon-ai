@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from enum import Enum
+from typing import Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -47,3 +48,7 @@ class ChatRequest(BaseModel):
     conversation_id: str | None = None
     message: str = Field(min_length=1, max_length=20_000)
     agent_id: str | None = None
+
+
+class AccountDataDeletion(BaseModel):
+    confirmation: Literal["DELETE"]

@@ -144,6 +144,13 @@ class ApiClient {
     await dio.delete<void>('/memories');
   }
 
+  Future<void> deleteMyData() async {
+    await dio.delete<void>(
+      '/users/me/data',
+      data: const {'confirmation': 'DELETE'},
+    );
+  }
+
   Stream<ChatStreamEvent> streamChat(String message) async* {
     final response = await dio.post<ResponseBody>(
       '/chat/stream',

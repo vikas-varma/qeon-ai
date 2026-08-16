@@ -147,6 +147,38 @@ def test_memories_persist_and_can_be_cleared() -> None:
     assert after_clear.json() == []
 
 
+def test_account_data_deletion_requires_typed_confirmation() -> None:
+    response = client.request(
+        "DELETE",
+        "/api/v1/users/me/data",
+        json={"confirmation": "delete"},
+    )
+
+    assert response.status_code == 422
+
+
+def test_account_data_deletion_removes_user_records() -> None:
+    created = client.post(
+        "/api/v1/tasks",
+        json={
+            "title": "Temporary task",
+            "instruction": "Delete this with my account data",
+            "schedule": "once",
+            "requires_approval": True,
+        },
+    )
+    deleted = client.request(
+        "DELETE",
+        "/api/v1/users/me/data",
+        json={"confirmation": "DELETE"},
+    )
+    after_delete = client.get("/api/v1/tasks")
+
+    assert created.status_code == 201
+    assert deleted.status_code == 204
+    assert after_delete.json() == []
+
+
 def test_gmail_draft_mime_is_encoded_safely() -> None:
     raw = google_workspace_service._encode_message(
         "owner@example.com",

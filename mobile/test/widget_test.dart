@@ -4,6 +4,7 @@ import 'package:qeonai/app.dart';
 import 'package:qeonai/features/auth/onboarding_screen.dart';
 import 'package:qeonai/features/integrations/connected_apps_screen.dart';
 import 'package:qeonai/features/integrations/email_agent_screen.dart';
+import 'package:qeonai/features/settings/privacy_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -82,6 +83,43 @@ void main() {
     );
     expect(sendButton.onPressed, isNotNull);
     expect(find.text('Approve and send'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('data deletion requires typed DELETE confirmation', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: PrivacyScreen())),
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('delete-account-data-button')),
+      300,
+    );
+    await tester.tap(find.byKey(const Key('delete-account-data-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Type DELETE to confirm.'), findsOneWidget);
+    FilledButton deleteButton = tester.widget(
+      find.byKey(const Key('delete-data-confirm-button')),
+    );
+    expect(deleteButton.onPressed, isNull);
+
+    await tester.enterText(
+      find.byKey(const Key('delete-data-confirmation-field')),
+      'DELETE',
+    );
+    await tester.pump();
+
+    deleteButton = tester.widget(
+      find.byKey(const Key('delete-data-confirm-button')),
+    );
+    expect(deleteButton.onPressed, isNotNull);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Type DELETE to confirm.'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
