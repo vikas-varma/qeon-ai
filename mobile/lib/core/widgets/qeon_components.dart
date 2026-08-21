@@ -43,27 +43,23 @@ class QeonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final card = Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: .96),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.divider),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 24,
-            offset: Offset(0, 8),
-          ),
-        ],
+    final radius = BorderRadius.circular(22);
+    return Material(
+      color: Theme.of(context).colorScheme.surface.withValues(alpha: .96),
+      elevation: 1,
+      shadowColor: const Color(0x10000000),
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: const BorderSide(color: AppColors.divider),
       ),
-      child: child,
-    );
-    if (onTap == null) return card;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: card,
+      clipBehavior: Clip.antiAlias,
+      child: onTap == null
+          ? Padding(padding: padding, child: child)
+          : InkWell(
+              onTap: onTap,
+              borderRadius: radius,
+              child: Padding(padding: padding, child: child),
+            ),
     );
   }
 }

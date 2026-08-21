@@ -123,6 +123,19 @@ class MemoryController extends AsyncNotifier<List<MemoryModel>> {
     state = AsyncData(current.where((memory) => memory.id != id).toList());
   }
 
+  Future<void> add({
+    required String category,
+    required String title,
+    required String value,
+  }) async {
+    if (AppConfig.useMockData) return;
+    final row = await ref
+        .read(apiClientProvider)
+        .createMemory(category: category, title: title, value: value);
+    final current = state.asData?.value ?? const <MemoryModel>[];
+    state = AsyncData([_memoryFromJson(row), ...current]);
+  }
+
   Future<void> clear() async {
     if (!AppConfig.useMockData) {
       await ref.read(apiClientProvider).clearMemories();

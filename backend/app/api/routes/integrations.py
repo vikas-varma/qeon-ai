@@ -57,9 +57,15 @@ async def gmail_callback(
 ) -> str:
     email = escape(await google_workspace_service.finish_connection(code, state_value, session))
     return (
-        "<html><body style='font-family:sans-serif;text-align:center;padding:48px'>"
+        "<!doctype html><html><head><meta name='viewport' "
+        "content='width=device-width,initial-scale=1'></head>"
+        "<body style='font-family:sans-serif;text-align:center;padding:48px'>"
         f"<h2>Gmail connected</h2><p>{email} is ready in Qeon AI.</p>"
-        "<p>You can close this window and return to the app.</p></body></html>"
+        "<p><a href='qeonai://app/gmail-connected' style='display:inline-block;"
+        "padding:14px 22px;background:#6d35f6;color:white;text-decoration:none;"
+        "border-radius:12px;font-weight:700'>Return to Qeon AI</a></p>"
+        "<p>If the app does not open, close this window and tap Check connection "
+        "in Qeon AI.</p></body></html>"
     )
 
 

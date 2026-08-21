@@ -153,6 +153,18 @@ class ApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> createMemory({
+    required String category,
+    required String title,
+    required String value,
+  }) async {
+    final response = await dio.post<Map<String, dynamic>>(
+      '/memories',
+      data: {'category': category, 'title': title, 'value': value},
+    );
+    return response.data ?? const {};
+  }
+
   Future<void> deleteMemory(String memoryId) async {
     await dio.delete<void>('/memories/$memoryId');
   }

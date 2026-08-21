@@ -7,6 +7,7 @@ import 'package:qeonai/features/integrations/connected_apps_screen.dart';
 import 'package:qeonai/features/integrations/email_agent_screen.dart';
 import 'package:qeonai/features/settings/privacy_screen.dart';
 import 'package:qeonai/features/settings/activity_screen.dart';
+import 'package:qeonai/ui/qeon_complete_ui.dart' as complete_ui;
 import 'package:flutter/material.dart';
 
 void main() {
@@ -40,6 +41,21 @@ void main() {
     expect(find.textContaining('demo', findRichText: true), findsNothing);
     final googleButton = tester.widget<OutlinedButton>(
       find.byKey(const Key('google-sign-in-button')),
+    );
+    expect(googleButton.onPressed, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('replacement UI uses secure Google sign-in', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: complete_ui.SignInScreen())),
+    );
+
+    expect(find.text('Welcome to Qeon AI'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.textContaining('demo', findRichText: true), findsNothing);
+    final googleButton = tester.widget<OutlinedButton>(
+      find.byKey(const Key('complete-ui-google-sign-in')),
     );
     expect(googleButton.onPressed, isNull);
     expect(tester.takeException(), isNull);

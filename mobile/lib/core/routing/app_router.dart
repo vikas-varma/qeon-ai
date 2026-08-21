@@ -14,6 +14,7 @@ import '../../features/history/history_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/integrations/connected_apps_screen.dart';
 import '../../features/integrations/email_agent_screen.dart';
+import '../../features/integrations/gmail_connection_complete_screen.dart';
 import '../../features/memory/memory_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/settings/appearance_screen.dart';
@@ -112,6 +113,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/email-agent',
         builder: (_, _) => const EmailAgentScreen(),
+      ),
+      GoRoute(
+        path: '/gmail-connected',
+        builder: (_, _) => const GmailConnectionCompleteScreen(),
       ),
       GoRoute(path: '/appearance', builder: (_, _) => const AppearanceScreen()),
       GoRoute(

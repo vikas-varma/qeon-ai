@@ -258,6 +258,24 @@ def test_gmail_send_rejects_missing_explicit_approval() -> None:
     assert response.status_code == 422
 
 
+def test_gmail_callback_returns_safe_mobile_deep_link(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    finish = AsyncMock(return_value="user+test@example.com")
+    monkeypatch.setattr(google_workspace_service, "finish_connection", finish)
+
+    response = client.get(
+        "/api/v1/integrations/gmail/callback",
+        params={"code": "authorization-code", "state": "encrypted-state"},
+    )
+
+    assert response.status_code == 200
+    assert "Gmail connected" in response.text
+    assert "qeonai://app/gmail-connected" in response.text
+    assert "authorization-code" not in response.text
+    assert "encrypted-state" not in response.text
+
+
 def test_gmail_send_calls_service_after_explicit_approval(
     monkeypatch: MonkeyPatch,
 ) -> None:
