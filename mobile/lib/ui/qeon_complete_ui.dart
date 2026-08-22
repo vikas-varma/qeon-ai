@@ -916,82 +916,98 @@ class _OnboardVisual extends StatelessWidget {
     }
 
     if (type == 2) {
-      return Center(
-        child: SurfaceCard(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              ListRow(
-                icon: Icons.search_rounded,
-                title: 'Research Agent',
-                subtitle: 'Find insights and answers',
+      return LayoutBuilder(
+        builder: (context, constraints) => Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: SurfaceCard(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    ListRow(
+                      icon: Icons.search_rounded,
+                      title: 'Research Agent',
+                      subtitle: 'Find insights and answers',
+                    ),
+                    Divider(height: 1),
+                    ListRow(
+                      icon: Icons.calendar_month_rounded,
+                      title: 'Calendar Agent',
+                      subtitle: 'Manage your schedule',
+                    ),
+                    Divider(height: 1),
+                    ListRow(
+                      icon: Icons.mail_outline_rounded,
+                      title: 'Email Agent',
+                      subtitle: 'Summarize and draft emails',
+                    ),
+                    Divider(height: 1),
+                    ListRow(
+                      icon: Icons.check_circle_outline_rounded,
+                      title: 'Task Agent',
+                      subtitle: 'Plan, organize, and track',
+                    ),
+                  ],
+                ),
               ),
-              Divider(height: 1),
-              ListRow(
-                icon: Icons.calendar_month_rounded,
-                title: 'Calendar Agent',
-                subtitle: 'Manage your schedule',
-              ),
-              Divider(height: 1),
-              ListRow(
-                icon: Icons.mail_outline_rounded,
-                title: 'Email Agent',
-                subtitle: 'Summarize and draft emails',
-              ),
-              Divider(height: 1),
-              ListRow(
-                icon: Icons.check_circle_outline_rounded,
-                title: 'Task Agent',
-                subtitle: 'Plan, organize, and track',
-              ),
-            ],
+            ),
           ),
         ),
       );
     }
 
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SurfaceCard(
-            child: ListRow(
-              icon: Icons.calendar_today_rounded,
-              title: 'Design review',
-              subtitle: 'Product team sync',
-            ),
-          ),
-          const SizedBox(height: 12),
-          const SurfaceCard(
-            child: ListRow(
-              icon: Icons.event_note_rounded,
-              title: 'Weekly planning',
-              subtitle: 'Team stand-up',
-            ),
-          ),
-          const SizedBox(height: 12),
-          SurfaceCard(
+    return LayoutBuilder(
+      builder: (context, constraints) => Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: SizedBox(
+            width: constraints.maxWidth,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const ListRow(
-                  icon: Icons.search_rounded,
-                  title: 'Research Agent',
-                  subtitle: 'Find 5 AI tools that match your profile',
+                const SurfaceCard(
+                  child: ListRow(
+                    icon: Icons.calendar_today_rounded,
+                    title: 'Design review',
+                    subtitle: 'Product team sync',
+                  ),
                 ),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(99),
-                  child: const LinearProgressIndicator(
-                    value: .60,
-                    minHeight: 6,
-                    color: QColors.accent,
-                    backgroundColor: QColors.accentSoft,
+                const SizedBox(height: 12),
+                const SurfaceCard(
+                  child: ListRow(
+                    icon: Icons.event_note_rounded,
+                    title: 'Weekly planning',
+                    subtitle: 'Team stand-up',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SurfaceCard(
+                  child: Column(
+                    children: [
+                      const ListRow(
+                        icon: Icons.search_rounded,
+                        title: 'Research Agent',
+                        subtitle: 'Find 5 AI tools that match your profile',
+                      ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(99),
+                        child: const LinearProgressIndicator(
+                          value: .60,
+                          minHeight: 6,
+                          color: QColors.accent,
+                          backgroundColor: QColors.accentSoft,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

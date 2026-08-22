@@ -30,6 +30,25 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('replacement onboarding fits a 360 by 640 screen', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 2;
+    tester.view.physicalSize = const Size(720, 1280);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(home: complete_ui.OnboardingScreen()),
+      ),
+    );
+
+    expect(find.text('Your personal\nAI assistant'), findsOneWidget);
+    expect(find.text('Skip'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('production sign-in has no unauthenticated demo bypass', (
     tester,
   ) async {
